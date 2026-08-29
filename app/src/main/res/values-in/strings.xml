@@ -34,9 +34,10 @@
     <string name="game_mode_title">Mode</string>
     <string-array name="game_mode_names">
         <item>Tidak didukung</item>
-        <item>Standar</item>
         <item>Performa</item>
-        <item>Baterai</item>
+        <item>Seimbang</item>
+        <item>Hemat Daya</item>
+        <item>Hemat Daya+</item>
     </string-array>
     <string name="heads_up_title">Notifikasi mengambang</string>
     <string name="fps_Info_title">Info FPS</string>
@@ -56,9 +57,10 @@
     <string name="per_app_title">Konfigurasi Permainan</string>
     <string name="per_app_mode_title">Mode Pilihan</string>
     <string-array name="per_app_preferred_mode_entries">
-        <item>Standar</item>
         <item>Performa</item>
-        <item>Baterai</item>
+        <item>Seimbang</item>
+        <item>Hemat Daya</item>
+        <item>Hemat Daya+</item>
     </string-array>
 
     <string name="per_app_angle_title">Gunakan ANGLE (percobaan)</string>

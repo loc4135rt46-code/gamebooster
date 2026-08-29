@@ -15,10 +15,10 @@
  */
 package io.chaldeaprjkt.gamespace.data
 
-import android.app.GameManager
+import io.chaldeaprjkt.gamespace.utils.PerfmtkController
 
 
-data class UserGame(val packageName: String, val mode: Int = GameManager.GAME_MODE_STANDARD) {
+data class UserGame(val packageName: String, val mode: Int = PerfmtkController.DEFAULT_MODE) {
     override fun toString(): String = "$packageName=$mode"
 
     companion object {

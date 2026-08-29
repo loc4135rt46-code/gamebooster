@@ -17,7 +17,6 @@ package io.chaldeaprjkt.gamespace.gamebar
 
 import android.annotation.SuppressLint
 import android.app.ActivityTaskManager
-import android.app.GameManager
 import android.app.Service
 import android.content.ComponentName
 import android.content.Context
@@ -33,10 +32,6 @@ import io.chaldeaprjkt.gamespace.data.GameSession
 import io.chaldeaprjkt.gamespace.data.SystemSettings
 import io.chaldeaprjkt.gamespace.utils.GameModeUtils
 import io.chaldeaprjkt.gamespace.utils.ScreenUtils
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @AndroidEntryPoint(Service::class)
@@ -56,8 +51,6 @@ class SessionService : Hilt_SessionService() {
     @Inject
     lateinit var gameModeUtils: GameModeUtils
 
-    private val scope = CoroutineScope(Job() + Dispatchers.IO)
-
     private val gameBarConnection = object : ServiceConnection {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             isBarConnected = true
@@ -73,7 +66,6 @@ class SessionService : Hilt_SessionService() {
 
     private lateinit var commandIntent: Intent
     private lateinit var gameBar: GameBarService
-    private lateinit var gameManager: GameManager
     private var isBarConnected = false
 
     @SuppressLint("WrongConstant")
@@ -84,8 +76,6 @@ class SessionService : Hilt_SessionService() {
         } catch (e: RemoteException) {
             Log.d(TAG, e.toString())
         }
-        gameManager = getSystemService(Context.GAME_SERVICE) as GameManager
-        gameModeUtils.bind(gameManager)
         isRunning = true
     }
 
@@ -117,7 +107,6 @@ class SessionService : Hilt_SessionService() {
             unbindService(gameBarConnection)
         }
         session.unregister()
-        gameModeUtils.unbind()
         screenUtils.unbind()
         isRunning = false
         super.onDestroy()
@@ -164,11 +153,9 @@ class SessionService : Hilt_SessionService() {
         val preferred = settings.userGames.firstOrNull { it.packageName == app }
             ?.mode ?: GameModeUtils.defaultPreferredMode
         gameModeUtils.activeGame = settings.userGames.firstOrNull { it.packageName == app }
-        scope.launch {
-            gameManager.getAvailableGameModes(app)
-                .takeIf { it.contains(preferred) }
-                ?.run { gameManager.setGameMode(app, preferred) }
-        }
+        // Áp dụng chế độ hiệu năng đã lưu cho game này bằng perfmtk (root), thay cho
+        // android.app.GameManager#setGameMode() trước đây.
+        gameModeUtils.setActiveGameMode(settings, preferred)
     }
 
     companion object {

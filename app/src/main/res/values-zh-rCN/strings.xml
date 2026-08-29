@@ -34,9 +34,10 @@
     <string name="game_mode_title">游戏模式</string>
     <string-array name="game_mode_names">
         <item>无</item>
-        <item>均衡</item>
         <item>性能</item>
+        <item>均衡</item>
         <item>省电</item>
+        <item>超级省电</item>
     </string-array>
     <string name="heads_up_title">警告</string>
     <string name="fps_Info_title">帧率信息</string>

@@ -34,9 +34,10 @@
     <string name="game_mode_title">Режим</string>
     <string-array name="game_mode_names">
         <item>Не поддерживается</item>
+        <item>Производительность</item>
         <item>Баланс</item>
-        <item>Скорость</item>
-        <item>Экономия</item>
+        <item>Энергосбережение</item>
+        <item>Энергосбережение+</item>
     </string-array>
     <string name="heads_up_title">Уведомления</string>
     <string name="fps_Info_title">Отображать FPS</string>
@@ -56,9 +57,10 @@
     <string name="per_app_title">Настроить игру</string>
     <string name="per_app_mode_title">Предпочтительный режим</string>
     <string-array name="per_app_preferred_mode_entries">
-        <item>Стандартный</item>
-        <item>Производительный</item>
-        <item>Экономный</item>
+        <item>Производительность</item>
+        <item>Баланс</item>
+        <item>Энергосбережение</item>
+        <item>Энергосбережение+</item>
     </string-array>
 
     <string name="per_app_angle_title">Использовать ANGLE (эксперементально)</string>

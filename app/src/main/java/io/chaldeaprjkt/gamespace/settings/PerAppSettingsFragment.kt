@@ -30,6 +30,7 @@ import io.chaldeaprjkt.gamespace.data.GameConfig
 import io.chaldeaprjkt.gamespace.data.SystemSettings
 import io.chaldeaprjkt.gamespace.data.UserGame
 import io.chaldeaprjkt.gamespace.utils.GameModeUtils
+import io.chaldeaprjkt.gamespace.utils.PerfmtkController
 import javax.inject.Inject
 
 @AndroidEntryPoint(PreferenceFragmentCompat::class)
@@ -106,7 +107,7 @@ class PerAppSettingsFragment : Hilt_PerAppSettingsFragment(),
         val gameInfo = currentGame ?: return false
         when (preference.key) {
             PREF_PREFERRED_MODE -> {
-                val newMode = (newValue as String).toIntOrNull() ?: 1
+                val newMode = (newValue as String).toIntOrNull() ?: PerfmtkController.DEFAULT_MODE
                 gameModeUtils.setGameModeFor(gameInfo.packageName, settings, newMode)
                 return true
             }

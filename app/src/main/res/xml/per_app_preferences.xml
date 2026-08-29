@@ -22,7 +22,7 @@
         android:persistent="false" />
 
     <ListPreference
-        android:defaultValue="1"
+        android:defaultValue="2"
         android:entries="@array/per_app_preferred_mode_entries"
         android:entryValues="@array/per_app_preferred_mode_values"
         android:key="per_app_preferred_mode"

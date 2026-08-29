@@ -15,7 +15,6 @@
  */
 package io.chaldeaprjkt.gamespace.utils
 
-import android.app.GameManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
@@ -33,16 +32,10 @@ import javax.inject.Inject
 
 class GameModeUtils @Inject constructor(private val context: Context) {
 
-    private var manager: GameManager? = null
+    // Bộ điều khiển hiệu năng CPU chạy quyền root (su -c perfmtk <mode>).
+    // Thay thế hoàn toàn cho android.app.GameManager#setGameMode() trước đây.
+    private val perfmtk = PerfmtkController()
     var activeGame: UserGame? = null
-
-    fun bind(manager: GameManager) {
-        this.manager = manager
-    }
-
-    fun unbind() {
-        manager = null
-    }
 
     fun setIntervention(packageName: String, modeData: List<GameConfig>? = null) {
         DeviceConfig.setProperty(
@@ -50,10 +43,20 @@ class GameModeUtils @Inject constructor(private val context: Context) {
         )
     }
 
-    fun setActiveGameMode(systemSettings: SystemSettings, mode: Int) {
+    /**
+     * Áp dụng chế độ hiệu năng cho game đang active: lưu lựa chọn của người dùng rồi
+     * gửi lệnh xuống perfmtk (root) để thực sự đổi CPU governor trên thiết bị.
+     * [onApplied] được gọi lại trên main thread khi perfmtk phản hồi (hoặc hết thời
+     * gian chờ / lỗi), để UI (vd. GameModeTile) cập nhật lại trạng thái "đang áp dụng".
+     */
+    fun setActiveGameMode(
+        systemSettings: SystemSettings,
+        mode: Int,
+        onApplied: ((PerfmtkController.Result) -> Unit)? = null
+    ) {
         val packageName = activeGame?.packageName ?: return
-        manager?.setGameMode(packageName, mode)
         activeGame = setGameModeFor(packageName, systemSettings, mode)
+        perfmtk.apply(mode, onApplied)
     }
 
     fun setGameModeFor(packageName: String, systemSettings: SystemSettings, mode: Int): UserGame {
@@ -96,10 +99,10 @@ class GameModeUtils @Inject constructor(private val context: Context) {
     } ?: false
 
     companion object {
-        const val defaultPreferredMode = GameManager.GAME_MODE_STANDARD
+        const val defaultPreferredMode = PerfmtkController.DEFAULT_MODE
         const val ACTION_ANGLE_FOR_ANDROID = "android.app.action.ANGLE_FOR_ANDROID"
 
         fun Context.describeGameMode(mode: Int) =
-            resources.getStringArray(R.array.game_mode_names)[mode] ?: "Unsupported"
+            resources.getStringArray(R.array.game_mode_names).getOrNull(mode) ?: "Unsupported"
     }
 }

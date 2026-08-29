@@ -34,9 +34,10 @@
     <string name="game_mode_title">Modus</string>
     <string-array name="game_mode_names">
         <item>Nicht unterstützt</item>
-        <item>Standard</item>
-        <item>Performance</item>
-        <item>Akkuschonend</item>
+        <item>Leistung</item>
+        <item>Ausgeglichen</item>
+        <item>Energiesparen</item>
+        <item>Energiesparen+</item>
     </string-array>
     <string name="heads_up_title">Heads-up</string>
     <string name="fps_Info_title">FPS-Info</string>
@@ -56,9 +57,10 @@
     <string name="per_app_title">Spiel konfigurieren</string>
     <string name="per_app_mode_title">Bevorzugter Modus</string>
     <string-array name="per_app_preferred_mode_entries">
-        <item>Standard</item>
-        <item>Performance</item>
-        <item>Akkuschonend</item>
+        <item>Leistung</item>
+        <item>Ausgeglichen</item>
+        <item>Energiesparen</item>
+        <item>Energiesparen+</item>
     </string-array>
 
     <string name="per_app_angle_title">ANGLE verwenden (experimentell)</string>

@@ -15,7 +15,7 @@
   -->
 
 <resources>
-    <string name="settings_title">Game Space</string>
+    <string name="settings_title">Game Booster</string>
     <string name="settings_summary">Manage your gaming setup</string>
     <string name="app_selector_label">Pick your game</string>
     <string name="auto_brightness_disabled_title">Disable auto-brightness</string>
@@ -30,13 +30,15 @@
     <string name="chaldea">chaldeaprjkt</string>
     <string name="state_enabled">enabled</string>
     <string name="state_disabled">disabled</string>
-    <!-- Game Mode Name - sorted by GameManager's enum, do not modify the sequence! -->
+    <!-- Game Mode Name - index matches the value passed to "su -c perfmtk <mode>".
+         Index 0 is unused, kept so modes 1..4 map directly without an offset. -->
     <string name="game_mode_title">Mode</string>
     <string-array name="game_mode_names">
         <item>Unsupported</item>
-        <item>Standard</item>
         <item>Performance</item>
-        <item>Battery</item>
+        <item>Balanced</item>
+        <item>Power save</item>
+        <item>Power save+</item>
     </string-array>
     <string name="heads_up_title">Heads-up</string>
     <string name="fps_Info_title">FPS Info</string>
@@ -56,9 +58,10 @@
     <string name="per_app_title">Configure Game</string>
     <string name="per_app_mode_title">Preferred Mode</string>
     <string-array name="per_app_preferred_mode_entries">
-        <item>Standard</item>
         <item>Performance</item>
-        <item>Battery</item>
+        <item>Balanced</item>
+        <item>Power save</item>
+        <item>Power save+</item>
     </string-array>
 
     <string name="per_app_angle_title">Use ANGLE (experimental)</string>
