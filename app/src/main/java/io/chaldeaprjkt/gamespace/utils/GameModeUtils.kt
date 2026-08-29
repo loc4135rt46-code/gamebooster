@@ -20,9 +20,9 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.os.IDeviceIdleController
-import android.os.RemoteException
 import android.os.ServiceManager
 import android.provider.DeviceConfig
+import android.util.Log
 import io.chaldeaprjkt.gamespace.R
 import io.chaldeaprjkt.gamespace.data.GameConfig
 import io.chaldeaprjkt.gamespace.data.GameConfig.Companion.asConfig
@@ -34,13 +34,23 @@ class GameModeUtils @Inject constructor(private val context: Context) {
 
     // Bộ điều khiển hiệu năng CPU chạy quyền root (su -c perfmtk <mode>).
     // Thay thế hoàn toàn cho android.app.GameManager#setGameMode() trước đây.
+    // Không phụ thuộc quyền hệ thống nào - chỉ cần root, nên vẫn chạy được dù
+    // app không còn sharedUserId=android.uid.system.
     private val perfmtk = PerfmtkController()
     var activeGame: UserGame? = null
 
+    // Tính năng tuỳ chọn (downscale độ phân giải / ANGLE renderer qua DeviceConfig).
+    // Cần READ/WRITE_DEVICE_CONFIG (signature|privileged) - không có system UID thì
+    // sẽ ném SecurityException, nên bọc try/catch để chỉ tính năng này im lặng bỏ
+    // qua, không kéo sập cả app.
     fun setIntervention(packageName: String, modeData: List<GameConfig>? = null) {
-        DeviceConfig.setProperty(
-            DeviceConfig.NAMESPACE_GAME_OVERLAY, packageName, modeData?.asConfig(), false
-        )
+        try {
+            DeviceConfig.setProperty(
+                DeviceConfig.NAMESPACE_GAME_OVERLAY, packageName, modeData?.asConfig(), false
+            )
+        } catch (e: Exception) {
+            Log.w(TAG, "setIntervention bị từ chối (thiếu quyền hệ thống?): ${e.message}")
+        }
     }
 
     /**
@@ -80,25 +90,36 @@ class GameModeUtils @Inject constructor(private val context: Context) {
             } else if (!enable && isListed) {
                 svc?.removePowerSaveWhitelistApp(context.packageName)
             }
-        } catch (e: RemoteException) {
-            e.printStackTrace()
+        } catch (e: Exception) {
+            // RemoteException (service lạ) hoặc SecurityException (thiếu quyền
+            // hệ thống) - không có quyền whitelist pin thì bỏ qua, không crash.
+            Log.w(TAG, "setupBatteryMode bị từ chối: ${e.message}")
         }
     }
 
 
-    fun findAnglePackage(): ActivityInfo? {
+    fun findAnglePackage(): ActivityInfo? = try {
         val intent = Intent(ACTION_ANGLE_FOR_ANDROID)
         val flags = PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_SYSTEM_ONLY.toLong())
         val info = context.packageManager.queryIntentActivities(intent, flags)
-        return info.firstOrNull()?.activityInfo
+        info.firstOrNull()?.activityInfo
+    } catch (e: Exception) {
+        Log.w(TAG, "findAnglePackage bị từ chối: ${e.message}")
+        null
     }
 
     fun isAngleUsed(packageName: String?) = packageName?.let {
-        DeviceConfig.getString(DeviceConfig.NAMESPACE_GAME_OVERLAY, it, null)
-            ?.contains("useAngle=true")
+        try {
+            DeviceConfig.getString(DeviceConfig.NAMESPACE_GAME_OVERLAY, it, null)
+                ?.contains("useAngle=true")
+        } catch (e: Exception) {
+            Log.w(TAG, "isAngleUsed bị từ chối (thiếu quyền hệ thống?): ${e.message}")
+            false
+        }
     } ?: false
 
     companion object {
+        private const val TAG = "GameModeUtils"
         const val defaultPreferredMode = PerfmtkController.DEFAULT_MODE
         const val ACTION_ANGLE_FOR_ANDROID = "android.app.action.ANGLE_FOR_ANDROID"
 

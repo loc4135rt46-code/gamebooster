@@ -28,6 +28,13 @@ class SystemSettings @Inject constructor(
 
     private val resolver = context.contentResolver
 
+    // SharedPreferences thay cho Settings.System.GAMESPACE_GAME_LIST: key đó chỉ
+    // tồn tại trên framework đã được vá riêng cho GameSpace. Không có system UID
+    // + framework vá đúng bản thì Settings.System có thể không lưu được (bị chặn
+    // hoặc âm thầm không ghi). SharedPreferences hoạt động trên mọi ROM, không
+    // cần quyền gì cả.
+    private val prefs = context.getSharedPreferences("gamespace_prefs", Context.MODE_PRIVATE)
+
     var headsUp
         get() =
             Settings.Global.getInt(resolver, Settings.Global.HEADS_UP_NOTIFICATIONS_ENABLED, 1) == 1
@@ -88,23 +95,23 @@ class SystemSettings @Inject constructor(
 
     var userGames
         get() =
-            Settings.System.getStringForUser(
-                resolver, Settings.System.GAMESPACE_GAME_LIST,
-                UserHandle.USER_CURRENT
-            )
+            prefs.getString(KEY_USER_GAMES, null)
                 ?.split(";")
                 ?.toList()?.filter { it.isNotEmpty() }
                 ?.map { UserGame.fromSettings(it) } ?: emptyList()
         set(games) {
-            Settings.System.putStringForUser(
-                resolver,
-                Settings.System.GAMESPACE_GAME_LIST,
-                if (games.isEmpty()) "" else
-                    games.joinToString(";") { it.toString() },
-                UserHandle.USER_CURRENT
-            )
+            prefs.edit()
+                .putString(
+                    KEY_USER_GAMES,
+                    if (games.isEmpty()) "" else games.joinToString(";") { it.toString() }
+                )
+                .apply()
             gameModeUtils.setupBatteryMode(games.isNotEmpty())
         }
 
     private fun Boolean.toInt() = if (this) 1 else 0
+
+    companion object {
+        private const val KEY_USER_GAMES = "user_games"
+    }
 }

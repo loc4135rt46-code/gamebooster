@@ -135,10 +135,16 @@ class SessionService : Hilt_SessionService() {
     }
 
     private fun tryStartFromDeath(): Int {
-        val game = ActivityTaskManager.getService()
-            ?.focusedRootTaskInfo
-            ?.topActivity?.packageName
-            ?: return START_NOT_STICKY
+        val game = try {
+            ActivityTaskManager.getService()
+                ?.focusedRootTaskInfo
+                ?.topActivity?.packageName
+        } catch (e: Exception) {
+            // Cần quyền hệ thống để đọc focused task - không có thì bỏ qua nhánh
+            // khôi phục này, không crash service.
+            Log.d(TAG, "tryStartFromDeath bị từ chối quyền: ${e.message}")
+            null
+        } ?: return START_NOT_STICKY
 
         if (!settings.userGames.any { it.packageName == game }) {
             return START_NOT_STICKY
