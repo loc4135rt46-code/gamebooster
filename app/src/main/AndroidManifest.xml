@@ -29,6 +29,13 @@
     <uses-permission android:name="com.android.systemui.permission.SCREEN_RECORDING" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.ACCESS_FPS_COUNTER" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- Không tự xin được qua UI bình thường (cần "Usage access" hoặc root
+         appops) - khai báo để rõ ràng mục đích dùng, không gây lỗi build. -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
 
     <application
         android:name=".GameSpace"
@@ -65,6 +72,18 @@
         <service
             android:name=".gamebar.GameBarService"
             android:exported="false" />
+
+        <service
+            android:name=".gamebar.GameWatcherService"
+            android:exported="false" />
+
+        <receiver
+            android:name=".gamebar.BootReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
 
         <receiver
             android:name=".gamebar.GameBroadcastReceiver"

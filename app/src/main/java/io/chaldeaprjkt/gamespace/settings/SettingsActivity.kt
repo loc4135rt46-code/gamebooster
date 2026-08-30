@@ -15,9 +15,15 @@
  */
 package io.chaldeaprjkt.gamespace.settings
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.android.settingslib.collapsingtoolbar.CollapsingToolbarBaseActivity
 import dagger.hilt.android.AndroidEntryPoint
+import io.chaldeaprjkt.gamespace.gamebar.GameWatcherService
 
 @AndroidEntryPoint(CollapsingToolbarBaseActivity::class)
 class SettingsActivity : Hilt_SettingsActivity() {
@@ -29,6 +35,20 @@ class SettingsActivity : Hilt_SettingsActivity() {
                 .beginTransaction()
                 .replace(com.android.settingslib.R.id.content_frame, SettingsFragment())
                 .commit()
+        }
+        requestNotificationPermissionIfNeeded()
+        GameWatcherService.start(this)
+    }
+
+    private fun requestNotificationPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
+        val granted = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
+        if (!granted) {
+            ActivityCompat.requestPermissions(
+                this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1
+            )
         }
     }
 }
