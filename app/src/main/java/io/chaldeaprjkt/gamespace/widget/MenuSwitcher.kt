@@ -76,8 +76,15 @@ class MenuSwitcher @JvmOverloads constructor(
 
     private fun updateFrameRateBinding() {
         if (showFps) {
-            taskManager?.focusedRootTaskInfo?.taskId?.let {
-                wm.registerTaskFpsCallback(it, Runnable::run, taskFpsCallback)
+            // focusedRootTaskInfo là API nội bộ cần quyền hệ thống - không có
+            // system UID sẽ ném SecurityException. Bọc try/catch để bật thử FPS
+            // counter không làm crash cả thanh game.
+            try {
+                taskManager?.focusedRootTaskInfo?.taskId?.let {
+                    wm.registerTaskFpsCallback(it, Runnable::run, taskFpsCallback)
+                }
+            } catch (e: Exception) {
+                android.util.Log.w("MenuSwitcher", "FPS counter bị từ chối: ${e.message}")
             }
         } else {
             wm.unregisterTaskFpsCallback(taskFpsCallback)

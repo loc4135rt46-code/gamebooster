@@ -22,6 +22,7 @@ import android.content.pm.PackageManager
 import android.os.Handler
 import android.os.Looper
 import android.os.UserHandle
+import android.util.Log
 
 
 class GameBroadcastReceiver : BroadcastReceiver() {
@@ -45,21 +46,30 @@ class GameBroadcastReceiver : BroadcastReceiver() {
     }
 
     private fun Context.resendBroadcast(prevIntent: Intent) {
-        val intent = (prevIntent.clone() as Intent).apply {
-            setPackage(null)
-            component = null
-        }
-        val flags = PackageManager.ResolveInfoFlags.of(0)
-        packageManager.queryBroadcastReceivers(intent, flags)
-            .mapNotNull { it.activityInfo?.packageName }
-            .filter { it != packageName }
-            .forEach {
-                (intent.clone() as Intent).apply {
-                    setPackage(it)
-                    sendBroadcastAsUser(this, UserHandle.ALL,
-                        android.Manifest.permission.MANAGE_GAME_MODE)
-                }
+        // Relay cho các app khác cũng lắng nghe GAME_START/STOP (kịch bản nhiều
+        // app hệ thống cùng ROM ăn theo game mode). Cần INTERACT_ACROSS_USERS_FULL
+        // + MANAGE_GAME_MODE để gửi - không có system UID thì sẽ ném
+        // SecurityException. Bọc try/catch để lỗi ở bước relay (không cần thiết
+        // cho chính app này) không làm crash cả luồng vào/ra game.
+        try {
+            val intent = (prevIntent.clone() as Intent).apply {
+                setPackage(null)
+                component = null
             }
+            val flags = PackageManager.ResolveInfoFlags.of(0)
+            packageManager.queryBroadcastReceivers(intent, flags)
+                .mapNotNull { it.activityInfo?.packageName }
+                .filter { it != packageName }
+                .forEach {
+                    (intent.clone() as Intent).apply {
+                        setPackage(it)
+                        sendBroadcastAsUser(this, UserHandle.ALL,
+                            android.Manifest.permission.MANAGE_GAME_MODE)
+                    }
+                }
+        } catch (e: Exception) {
+            Log.w("GameBroadcastReceiver", "resendBroadcast bị từ chối: ${e.message}")
+        }
     }
 
     companion object {

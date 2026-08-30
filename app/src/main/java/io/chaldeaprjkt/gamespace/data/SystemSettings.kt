@@ -16,8 +16,8 @@
 package io.chaldeaprjkt.gamespace.data
 
 import android.content.Context
-import android.os.UserHandle
 import android.provider.Settings
+import android.util.Log
 import io.chaldeaprjkt.gamespace.utils.GameModeUtils
 import javax.inject.Inject
 
@@ -28,11 +28,9 @@ class SystemSettings @Inject constructor(
 
     private val resolver = context.contentResolver
 
-    // SharedPreferences thay cho Settings.System.GAMESPACE_GAME_LIST: key đó chỉ
-    // tồn tại trên framework đã được vá riêng cho GameSpace. Không có system UID
-    // + framework vá đúng bản thì Settings.System có thể không lưu được (bị chặn
-    // hoặc âm thầm không ghi). SharedPreferences hoạt động trên mọi ROM, không
-    // cần quyền gì cả.
+    // SharedPreferences cho các key vốn cần framework đã vá riêng hoặc quyền hệ
+    // thống mới đọc/ghi được (GAMESPACE_GAME_LIST, GAMESPACE_SUPPRESS_FULLSCREEN_
+    // INTENT). Hoạt động trên mọi ROM, không cần quyền gì cả.
     private val prefs = context.getSharedPreferences("gamespace_prefs", Context.MODE_PRIVATE)
 
     var headsUp
@@ -46,51 +44,54 @@ class SystemSettings @Inject constructor(
             )
         }
 
+    // Bỏ *ForUser(..., UserHandle.USER_CURRENT): biến thể "ForUser" cần quyền
+    // INTERACT_ACROSS_USERS_FULL để hệ thống resolve user -2, ngay cả khi chạy
+    // cho đúng user hiện tại. Dùng bản thường (getInt/putInt) - áp dụng ngầm cho
+    // user gọi, không cần quyền gì. Bọc try/catch phòng khi ghi key hệ thống
+    // (SCREEN_BRIGHTNESS_MODE) bị chặn do thiếu WRITE_SETTINGS.
     var autoBrightness
-        get() =
-            Settings.System.getIntForUser(
+        get() = try {
+            Settings.System.getInt(
                 resolver,
                 Settings.System.SCREEN_BRIGHTNESS_MODE,
-                Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC,
-                UserHandle.USER_CURRENT
-            ) ==
-                    Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+                Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+            ) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+        } catch (e: Exception) {
+            Log.w(TAG, "autoBrightness bị từ chối: ${e.message}")
+            false
+        }
         set(auto) {
-            Settings.System.putIntForUser(
-                resolver,
-                Settings.System.SCREEN_BRIGHTNESS_MODE,
-                if (auto) Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
-                else Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL,
-                UserHandle.USER_CURRENT
-            )
+            try {
+                Settings.System.putInt(
+                    resolver,
+                    Settings.System.SCREEN_BRIGHTNESS_MODE,
+                    if (auto) Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
+                    else Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
+                )
+            } catch (e: Exception) {
+                Log.w(TAG, "autoBrightness (ghi) bị từ chối: ${e.message}")
+            }
         }
 
     var threeScreenshot
-        get() = Settings.System.getIntForUser(
-            resolver, Settings.System.SWIPE_TO_SCREENSHOT, 0,
-            UserHandle.USER_CURRENT
-        ) == 1
+        get() = try {
+            Settings.System.getInt(resolver, Settings.System.SWIPE_TO_SCREENSHOT, 0) == 1
+        } catch (e: Exception) {
+            Log.w(TAG, "threeScreenshot bị từ chối: ${e.message}")
+            false
+        }
         set(it) {
-            Settings.System.putIntForUser(
-                resolver, Settings.System.SWIPE_TO_SCREENSHOT,
-                it.toInt(), UserHandle.USER_CURRENT
-            )
+            try {
+                Settings.System.putInt(resolver, Settings.System.SWIPE_TO_SCREENSHOT, it.toInt())
+            } catch (e: Exception) {
+                Log.w(TAG, "threeScreenshot (ghi) bị từ chối: ${e.message}")
+            }
         }
 
     var suppressFullscreenIntent
-        get() = Settings.System.getIntForUser(
-            resolver,
-            Settings.System.GAMESPACE_SUPPRESS_FULLSCREEN_INTENT,
-            0,
-            UserHandle.USER_CURRENT
-        ) == 1
+        get() = prefs.getBoolean(KEY_SUPPRESS_FULLSCREEN_INTENT, false)
         set(it) {
-            Settings.System.putIntForUser(
-                resolver,
-                Settings.System.GAMESPACE_SUPPRESS_FULLSCREEN_INTENT,
-                it.toInt(),
-                UserHandle.USER_CURRENT
-            )
+            prefs.edit().putBoolean(KEY_SUPPRESS_FULLSCREEN_INTENT, it).apply()
         }
 
     var userGames
@@ -112,6 +113,8 @@ class SystemSettings @Inject constructor(
     private fun Boolean.toInt() = if (this) 1 else 0
 
     companion object {
+        private const val TAG = "SystemSettings"
         private const val KEY_USER_GAMES = "user_games"
+        private const val KEY_SUPPRESS_FULLSCREEN_INTENT = "suppress_fullscreen_intent"
     }
 }

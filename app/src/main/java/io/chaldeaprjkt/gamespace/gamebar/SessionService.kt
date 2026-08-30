@@ -24,7 +24,6 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
 import android.os.RemoteException
-import android.os.UserHandle
 import android.util.Log
 import dagger.hilt.android.AndroidEntryPoint
 import io.chaldeaprjkt.gamespace.data.AppSettings
@@ -95,7 +94,7 @@ class SessionService : Hilt_SessionService() {
 
     private fun startGameBar() {
         Intent(this, GameBarService::class.java).apply {
-            bindServiceAsUser(this, gameBarConnection, Context.BIND_AUTO_CREATE, UserHandle.CURRENT)
+            bindService(this, gameBarConnection, Context.BIND_AUTO_CREATE)
         }
     }
 
@@ -178,11 +177,11 @@ class SessionService : Hilt_SessionService() {
                 putExtra(EXTRA_PACKAGE_NAME, app)
             }
             .takeIf { !isRunning }
-            ?.run { context.startServiceAsUser(this, UserHandle.CURRENT) }
+            ?.run { context.startService(this) }
 
         fun stop(context: Context) = Intent(context, SessionService::class.java)
             .apply { action = STOP }
             .takeIf { isRunning }
-            ?.run { context.startServiceAsUser(this, UserHandle.CURRENT) }
+            ?.run { context.startService(this) }
     }
 }

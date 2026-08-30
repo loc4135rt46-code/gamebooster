@@ -25,7 +25,7 @@ import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.os.PowerManager
-import android.os.UserHandle
+import android.util.Log
 import android.view.WindowManager
 import com.android.internal.util.ScreenshotHelper
 import com.android.systemui.screenrecord.IRemoteRecording
@@ -58,14 +58,21 @@ class ScreenUtils @Inject constructor(private val context: Context) {
     val recorder: IRemoteRecording? get() = remoteRecording
 
     fun bind() {
-        isRecorderBound = context.bindServiceAsUser(Intent().apply {
-            component = ComponentName(
-                "com.android.systemui",
-                "com.android.systemui.screenrecord.RecordingService"
-            )
-        }, recorderConnection, Context.BIND_AUTO_CREATE, UserHandle.CURRENT)
-        if (!isRecorderBound) {
-            exitProcess(1)
+        // RecordingService là dịch vụ nội bộ của SystemUI, cần quyền
+        // com.android.systemui.permission.SCREEN_RECORDING (signature) mới bind
+        // được - không có system UID/chữ ký khớp thì bind sẽ fail. Trước đây fail
+        // là gọi exitProcess(1), tự giết cả app mỗi lần vào game. Giờ chỉ tắt tính
+        // năng FPS counter, không crash phần còn lại.
+        isRecorderBound = try {
+            context.bindService(Intent().apply {
+                component = ComponentName(
+                    "com.android.systemui",
+                    "com.android.systemui.screenrecord.RecordingService"
+                )
+            }, recorderConnection, Context.BIND_AUTO_CREATE)
+        } catch (e: Exception) {
+            Log.w(TAG, "Không bind được RecordingService (thiếu quyền hệ thống?): ${e.message}")
+            false
         }
         @Suppress("DEPRECATION") // we use it for stay-awake feature
         wakelock = (context.getSystemService(Context.POWER_SERVICE) as PowerManager)
@@ -99,4 +106,8 @@ class ScreenUtils @Inject constructor(private val context: Context) {
                 wakelock?.takeIf { it.isHeld }?.release()
             }
         }
+
+    companion object {
+        private const val TAG = "ScreenUtils"
+    }
 }
