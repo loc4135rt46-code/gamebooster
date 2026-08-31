@@ -61,7 +61,11 @@ class GameBarService : Hilt_GameBarService() {
 
     private val barLayoutParam =
         WindowManager.LayoutParams(
-            WindowManager.LayoutParams.TYPE_SYSTEM_DIALOG,
+            // TYPE_SYSTEM_DIALOG chỉ app hệ thống mới dùng được, addView sẽ ném
+            // SecurityException dù có SYSTEM_ALERT_WINDOW. TYPE_APPLICATION_OVERLAY
+            // là loại chuẩn cho app thường vẽ overlay (từ API 26), dùng được ngay
+            // khi có quyền "Hiển thị trên các ứng dụng khác".
+            WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE
                     or WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL
                     or WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN,
@@ -192,9 +196,14 @@ class GameBarService : Hilt_GameBarService() {
                 wm.removeViewImmediate(rootBarView)
             }
             wm.addView(rootBarView, barLayoutParam)
-        } catch (_: RuntimeException) {
+        } catch (e: RuntimeException) {
             if (rootBarView.isAttachedToWindow) {
                 wm.updateViewLayout(rootBarView, barLayoutParam)
+            } else {
+                android.util.Log.w(
+                    "GameBarService",
+                    "Không addView được rootBarView (thiếu quyền overlay?): ${e.message}"
+                )
             }
         }
     }

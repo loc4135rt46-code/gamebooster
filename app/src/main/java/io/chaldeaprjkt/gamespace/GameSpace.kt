@@ -54,7 +54,8 @@ class GameSpace : Hilt_GameSpace() {
                 // dùng ";" (không phải "&&") để 1 lệnh grant fail không chặn các
                 // lệnh còn lại - mỗi quyền thử độc lập.
                 val cmd = perms.joinToString(" ; ") { "pm grant $packageName $it" } +
-                    " ; appops set $packageName GET_USAGE_STATS allow"
+                    " ; appops set $packageName GET_USAGE_STATS allow" +
+                    " ; appops set $packageName SYSTEM_ALERT_WINDOW allow"
                 ProcessBuilder("su", "-c", cmd)
                     .redirectErrorStream(true)
                     .start()
