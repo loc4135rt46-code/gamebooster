@@ -58,7 +58,7 @@ class GameSession @Inject constructor(
             autoBrightness = systemSettings.autoBrightness,
             headsUp = systemSettings.headsUp,
             threeScreenshot = systemSettings.threeScreenshot,
-            ringerMode = audioManager.ringerModeInternal,
+            ringerMode = getRingerModeSafely(),
         )
         if (appSettings.noHeadsUp) {
             systemSettings.headsUp = false
@@ -69,7 +69,7 @@ class GameSession @Inject constructor(
         if (appSettings.noThreeScreenshot) {
             systemSettings.threeScreenshot = false
         }
-        audioManager.ringerModeInternal = appSettings.ringerMode
+        setRingerModeSafely(appSettings.ringerMode)
     }
 
     fun unregister() {
@@ -83,8 +83,27 @@ class GameSession @Inject constructor(
         if (appSettings.noThreeScreenshot) {
             orig.threeScreenshot?.let { systemSettings.threeScreenshot = it }
         }
-        audioManager.ringerModeInternal = orig.ringerMode
+        setRingerModeSafely(orig.ringerMode)
         state = null
+    }
+
+    // ringerModeInternal cần quyền STATUS_BAR_SERVICE - hệ thống chỉ cấp riêng
+    // cho SystemUI, root pm grant có thử (trong GameSpace.kt) nhưng không chắc ăn
+    // vì bị khoá chặt hơn permission thường. Bọc try/catch để tính năng "đổi
+    // chuông lúc vào/ra game" không có thì bỏ qua, không crash cả session.
+    private fun getRingerModeSafely() = try {
+        audioManager.ringerModeInternal
+    } catch (e: Exception) {
+        android.util.Log.w(TAG, "Không đọc được ringerModeInternal: ${e.message}")
+        AudioManager.RINGER_MODE_NORMAL
+    }
+
+    private fun setRingerModeSafely(mode: Int) {
+        try {
+            audioManager.ringerModeInternal = mode
+        } catch (e: Exception) {
+            android.util.Log.w(TAG, "Không đổi được ringerModeInternal: ${e.message}")
+        }
     }
 
     fun finalize() {
@@ -92,6 +111,7 @@ class GameSession @Inject constructor(
     }
 
     companion object {
+        private const val TAG = "GameSession"
         const val PREFS_NAME = "persisted_session"
         const val KEY_SAVED_SESSION = "session"
     }

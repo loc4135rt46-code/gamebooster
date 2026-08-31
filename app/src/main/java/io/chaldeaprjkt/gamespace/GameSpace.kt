@@ -47,6 +47,7 @@ class GameSpace : Hilt_GameSpace() {
             "android.permission.MANAGE_GAME_MODE",
             "com.android.systemui.permission.SCREEN_RECORDING",
             "android.permission.ACCESS_FPS_COUNTER",
+            "android.permission.STATUS_BAR_SERVICE",
         )
         Thread {
             try {
