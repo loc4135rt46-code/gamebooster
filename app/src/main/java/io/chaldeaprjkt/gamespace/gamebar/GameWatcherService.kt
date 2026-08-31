@@ -50,15 +50,22 @@ class GameWatcherService : Hilt_GameWatcherService() {
     @Inject
     lateinit var settings: SystemSettings
 
-    private val scope = CoroutineScope(Job() + Dispatchers.Default)
+    private val scope = CoroutineScope(Job() + Dispatchers.IO)
     private var activeGame: String? = null
     private var lastPollTime = System.currentTimeMillis()
 
     override fun onCreate() {
         super.onCreate()
         startForeground(NOTIF_ID, buildNotification())
-        grantUsageAccessViaRoot()
-        scope.launch { pollLoop() }
+        // grantUsageAccessViaRoot() gọi "su" - lệnh blocking, có thể mất thời
+        // gian không đoán trước được (lần đầu xin root, KernelSU/APatch có thể
+        // phải chờ xác nhận). Trước đây gọi thẳng trên main thread trong
+        // onCreate() khiến service bị treo main thread -> bị hệ thống coi là
+        // crash. Giờ chạy hết trong coroutine trên Dispatchers.IO.
+        scope.launch {
+            grantUsageAccessViaRoot()
+            pollLoop()
+        }
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int) = START_STICKY
