@@ -24,23 +24,19 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 
 /**
- * Cầu nối giữa GameSpace và công cụ chỉnh hiệu năng CPU chạy quyền root "perfmtk".
+ * Cầu nối giữa GameSpace và module root PerfMTK (JUANIMAN/PerfMTK trên GitHub -
+ * module Magisk/KernelSU/APatch cho thiết bị MediaTek) để chỉnh hiệu năng CPU.
  *
- * Thay vì dựa vào android.app.GameManager#setGameMode() (vốn cần vá SystemUI/Settings
- * theo Game Mode API của AOSP mới có tác dụng thật), lớp này áp dụng chế độ hiệu năng
- * trực tiếp bằng lệnh shell chạy quyền root:
+ * Gọi thẳng 1 lệnh (không tương tác), tham số là CHỮ theo đúng README gốc của
+ * PerfMTK:
  *
- *      su -c "perfmtk <mode>"
+ *      su -c "perfmtk performance"
+ *      su -c "perfmtk balanced"
+ *      su -c "perfmtk powersave"
+ *      su -c "perfmtk powersave+"
  *
- * <mode> là số nguyên 1..4, mỗi số là một chế độ CPU mà perfmtk hiểu và áp dụng:
- *   1 = Performance   (hiệu năng cao nhất)
- *   2 = Balanced       (mặc định, cân bằng)
- *   3 = Power save
- *   4 = Power save+    (tiết kiệm pin sâu nhất)
- *
- * Sau khi phát lệnh, [apply] chờ tối đa [RESPONSE_TIMEOUT_MS] để nhận phản hồi/exit
- * code từ tiến trình perfmtk trước khi coi như xong - việc chờ có giới hạn thời gian
- * giúp tile ngoài màn hình game không bị đứng nếu binary phản hồi chậm hoặc không có.
+ * Nội bộ GameSpace vẫn dùng số nguyên 1..4 (khớp UI/tile/thứ tự cycle có sẵn),
+ * chỉ map sang đúng tên chữ ngay trước khi gọi lệnh thật.
  */
 class PerfmtkController {
 
@@ -68,50 +64,41 @@ class PerfmtkController {
     }
 
     private fun runPerfmtk(mode: Int): Result {
-        // perfmtk chạy kiểu tương tác (không nhận tham số dòng lệnh): mở shell
-        // root, gõ "perfmtk" rồi Enter, đợi nó khởi động/hiện menu, mới gõ số
-        // chọn mode rồi Enter - giống hệt thao tác gõ tay trong terminal.
+        val arg = argFor(mode)
         val process = try {
-            ProcessBuilder("su").redirectErrorStream(true).start()
+            ProcessBuilder("su", "-c", "perfmtk $arg")
+                .redirectErrorStream(true)
+                .start()
         } catch (e: Exception) {
             // Không có binary "su" (thiết bị chưa root) hoặc bị chặn quyền root
-            Log.e(TAG, "Không thể mở shell 'su': ${e.message}")
+            Log.e(TAG, "Không thể chạy 'su -c perfmtk $arg': ${e.message}")
             return Result.NO_ROOT
         }
 
-        return try {
-            val writer = process.outputStream.bufferedWriter()
-            writer.write("perfmtk\n")
-            writer.flush()
+        // Đợi vài trăm mili giây để perfmtk phản hồi, không chờ vô hạn để tránh
+        // đứng UI nếu tiến trình su/perfmtk bị treo hoặc không phản hồi.
+        val responded = process.waitFor(RESPONSE_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+        val output = runCatching {
+            process.inputStream.bufferedReader().readText().trim()
+        }.getOrDefault("")
 
-            // Đợi vài trăm mili giây để perfmtk khởi động xong, hiện menu chọn
-            // chế độ, trước khi gửi lựa chọn - gửi sớm quá thì perfmtk chưa kịp
-            // đọc input.
-            Thread.sleep(INTERACTIVE_DELAY_MS)
-
-            writer.write("$mode\n")
-            writer.flush()
-            writer.close()
-
-            val responded = process.waitFor(RESPONSE_TIMEOUT_MS, TimeUnit.MILLISECONDS)
-            val output = runCatching {
-                process.inputStream.bufferedReader().readText().trim()
-            }.getOrDefault("")
-
-            if (!responded) {
-                process.destroy()
-                Log.w(TAG, "perfmtk mode=$mode: không phản hồi sau ${RESPONSE_TIMEOUT_MS}ms")
-                return Result.TIMEOUT
-            }
-
-            val exit = process.exitValue()
-            Log.d(TAG, "perfmtk mode=$mode -> exit=$exit output=$output")
-            if (exit == 0) Result.SUCCESS else Result.FAILED
-        } catch (e: Exception) {
+        if (!responded) {
             process.destroy()
-            Log.e(TAG, "Lỗi giao tiếp với perfmtk (mode=$mode): ${e.message}")
-            Result.NO_ROOT
+            Log.w(TAG, "perfmtk $arg: không phản hồi sau ${RESPONSE_TIMEOUT_MS}ms")
+            return Result.TIMEOUT
         }
+
+        val exit = process.exitValue()
+        Log.d(TAG, "perfmtk $arg -> exit=$exit output=$output")
+        return if (exit == 0) Result.SUCCESS else Result.FAILED
+    }
+
+    private fun argFor(mode: Int) = when (mode) {
+        MODE_PERFORMANCE -> "performance"
+        MODE_BALANCED -> "balanced"
+        MODE_POWER_SAVE -> "powersave"
+        MODE_POWER_SAVE_PLUS -> "powersave+"
+        else -> "balanced"
     }
 
     enum class Result { IDLE, SUCCESS, FAILED, TIMEOUT, NO_ROOT }
@@ -121,9 +108,6 @@ class PerfmtkController {
 
         /** Thời gian tối đa chờ perfmtk phản hồi sau khi gửi lệnh (mili giây). */
         private const val RESPONSE_TIMEOUT_MS = 300L
-
-        /** Thời gian đợi sau khi gõ "perfmtk" trước khi gửi số chọn mode (mili giây). */
-        private const val INTERACTIVE_DELAY_MS = 300L
 
         const val MODE_PERFORMANCE = 1
         const val MODE_BALANCED = 2
