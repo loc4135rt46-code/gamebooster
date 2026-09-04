@@ -56,7 +56,7 @@ class SystemSettings @Inject constructor(
                 Settings.System.SCREEN_BRIGHTNESS_MODE,
                 Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
             ) == Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.w(TAG, "autoBrightness bị từ chối: ${e.message}")
             false
         }
@@ -68,7 +68,7 @@ class SystemSettings @Inject constructor(
                     if (auto) Settings.System.SCREEN_BRIGHTNESS_MODE_AUTOMATIC
                     else Settings.System.SCREEN_BRIGHTNESS_MODE_MANUAL
                 )
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Log.w(TAG, "autoBrightness (ghi) bị từ chối: ${e.message}")
             }
         }
@@ -76,14 +76,14 @@ class SystemSettings @Inject constructor(
     var threeScreenshot
         get() = try {
             Settings.System.getInt(resolver, Settings.System.SWIPE_TO_SCREENSHOT, 0) == 1
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.w(TAG, "threeScreenshot bị từ chối: ${e.message}")
             false
         }
         set(it) {
             try {
                 Settings.System.putInt(resolver, Settings.System.SWIPE_TO_SCREENSHOT, it.toInt())
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Log.w(TAG, "threeScreenshot (ghi) bị từ chối: ${e.message}")
             }
         }

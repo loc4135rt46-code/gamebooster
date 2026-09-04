@@ -67,7 +67,7 @@ class GameBroadcastReceiver : BroadcastReceiver() {
                             android.Manifest.permission.MANAGE_GAME_MODE)
                     }
                 }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.w("GameBroadcastReceiver", "resendBroadcast bị từ chối: ${e.message}")
         }
     }

@@ -60,7 +60,7 @@ class GameSpace : Hilt_GameSpace() {
                     .redirectErrorStream(true)
                     .start()
                     .waitFor()
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Log.w(TAG, "Không tự cấp được quyền qua root: ${e.message}")
             }
         }.start()

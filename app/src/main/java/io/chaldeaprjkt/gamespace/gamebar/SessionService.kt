@@ -128,7 +128,7 @@ class SessionService : Hilt_SessionService() {
             applyGameModeConfig(app)
             gameBar.onGameStart()
             screenUtils.stayAwake = appSettings.stayAwake
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.d(TAG, e.toString())
         }
     }
@@ -138,7 +138,7 @@ class SessionService : Hilt_SessionService() {
             ActivityTaskManager.getService()
                 ?.focusedRootTaskInfo
                 ?.topActivity?.packageName
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             // Cần quyền hệ thống để đọc focused task - không có thì bỏ qua nhánh
             // khôi phục này, không crash service.
             Log.d(TAG, "tryStartFromDeath bị từ chối quyền: ${e.message}")

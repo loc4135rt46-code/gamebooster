@@ -81,7 +81,7 @@ class GameWatcherService : Hilt_GameWatcherService() {
         while (true) {
             try {
                 checkForegroundApp()
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 Log.w(TAG, "poll lỗi: ${e.message}")
             }
             delay(POLL_INTERVAL_MS)
@@ -125,7 +125,7 @@ class GameWatcherService : Hilt_GameWatcherService() {
                 .redirectErrorStream(true)
                 .start()
                 .waitFor()
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.w(TAG, "Không tự cấp được usage access qua root: ${e.message}")
         }
     }

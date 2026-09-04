@@ -44,7 +44,7 @@ class ScreenUtils @Inject constructor(private val context: Context) {
         override fun onServiceConnected(name: ComponentName?, service: IBinder?) {
             try {
                 remoteRecording = IRemoteRecording.Stub.asInterface(service)
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 e.printStackTrace()
                 exitProcess(1)
             }
@@ -70,7 +70,7 @@ class ScreenUtils @Inject constructor(private val context: Context) {
                     "com.android.systemui.screenrecord.RecordingService"
                 )
             }, recorderConnection, Context.BIND_AUTO_CREATE)
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.w(TAG, "Không bind được RecordingService (thiếu quyền hệ thống?): ${e.message}")
             false
         }

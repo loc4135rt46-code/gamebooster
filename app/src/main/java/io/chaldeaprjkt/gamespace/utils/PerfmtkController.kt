@@ -69,7 +69,7 @@ class PerfmtkController {
             ProcessBuilder("su", "-c", "perfmtk $arg")
                 .redirectErrorStream(true)
                 .start()
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             // Không có binary "su" (thiết bị chưa root) hoặc bị chặn quyền root
             Log.e(TAG, "Không thể chạy 'su -c perfmtk $arg': ${e.message}")
             return Result.NO_ROOT

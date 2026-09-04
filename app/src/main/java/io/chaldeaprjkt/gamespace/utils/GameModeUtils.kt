@@ -48,7 +48,7 @@ class GameModeUtils @Inject constructor(private val context: Context) {
             DeviceConfig.setProperty(
                 DeviceConfig.NAMESPACE_GAME_OVERLAY, packageName, modeData?.asConfig(), false
             )
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.w(TAG, "setIntervention bị từ chối (thiếu quyền hệ thống?): ${e.message}")
         }
     }
@@ -90,7 +90,7 @@ class GameModeUtils @Inject constructor(private val context: Context) {
             } else if (!enable && isListed) {
                 svc?.removePowerSaveWhitelistApp(context.packageName)
             }
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             // RemoteException (service lạ) hoặc SecurityException (thiếu quyền
             // hệ thống) - không có quyền whitelist pin thì bỏ qua, không crash.
             Log.w(TAG, "setupBatteryMode bị từ chối: ${e.message}")
@@ -103,7 +103,7 @@ class GameModeUtils @Inject constructor(private val context: Context) {
         val flags = PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_SYSTEM_ONLY.toLong())
         val info = context.packageManager.queryIntentActivities(intent, flags)
         info.firstOrNull()?.activityInfo
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         Log.w(TAG, "findAnglePackage bị từ chối: ${e.message}")
         null
     }
@@ -112,7 +112,7 @@ class GameModeUtils @Inject constructor(private val context: Context) {
         try {
             DeviceConfig.getString(DeviceConfig.NAMESPACE_GAME_OVERLAY, it, null)
                 ?.contains("useAngle=true")
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             Log.w(TAG, "isAngleUsed bị từ chối (thiếu quyền hệ thống?): ${e.message}")
             false
         }

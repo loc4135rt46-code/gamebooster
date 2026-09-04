@@ -36,7 +36,7 @@ class GameSession @Inject constructor(
             ?.let {
                 try {
                     gson.fromJson(it, SessionState::class.java)
-                } catch (e: RuntimeException) {
+                } catch (e: Throwable) {
                     null
                 }
             }
@@ -44,7 +44,7 @@ class GameSession @Inject constructor(
             .putString(KEY_SAVED_SESSION, value?.let {
                 try {
                     gson.toJson(value)
-                } catch (e: RuntimeException) {
+                } catch (e: Throwable) {
                     ""
                 }
             } ?: "")
@@ -93,7 +93,7 @@ class GameSession @Inject constructor(
     // chuông lúc vào/ra game" không có thì bỏ qua, không crash cả session.
     private fun getRingerModeSafely() = try {
         audioManager.ringerModeInternal
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
         android.util.Log.w(TAG, "Không đọc được ringerModeInternal: ${e.message}")
         AudioManager.RINGER_MODE_NORMAL
     }
@@ -101,7 +101,7 @@ class GameSession @Inject constructor(
     private fun setRingerModeSafely(mode: Int) {
         try {
             audioManager.ringerModeInternal = mode
-        } catch (e: Exception) {
+        } catch (e: Throwable) {
             android.util.Log.w(TAG, "Không đổi được ringerModeInternal: ${e.message}")
         }
     }

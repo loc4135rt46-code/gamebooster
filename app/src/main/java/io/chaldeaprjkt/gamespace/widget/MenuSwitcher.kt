@@ -83,7 +83,7 @@ class MenuSwitcher @JvmOverloads constructor(
                 taskManager?.focusedRootTaskInfo?.taskId?.let {
                     wm.registerTaskFpsCallback(it, Runnable::run, taskFpsCallback)
                 }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 android.util.Log.w("MenuSwitcher", "FPS counter bị từ chối: ${e.message}")
             }
         } else {

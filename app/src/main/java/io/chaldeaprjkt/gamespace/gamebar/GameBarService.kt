@@ -196,7 +196,7 @@ class GameBarService : Hilt_GameBarService() {
                 wm.removeViewImmediate(rootBarView)
             }
             wm.addView(rootBarView, barLayoutParam)
-        } catch (e: RuntimeException) {
+        } catch (e: Throwable) {
             if (rootBarView.isAttachedToWindow) {
                 wm.updateViewLayout(rootBarView, barLayoutParam)
             } else {
@@ -308,7 +308,7 @@ class GameBarService : Hilt_GameBarService() {
         handler.postDelayed({
             try {
                 screenUtils.takeScreenshot { afterShot() }
-            } catch (e: Exception) {
+            } catch (e: Throwable) {
                 e.printStackTrace()
                 afterShot()
             }
